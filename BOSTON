@@ -1,0 +1,123 @@
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local MainFrame = Instance.new("Frame", ScreenGui)
+
+-- إعدادات المستطيل الأساسي
+MainFrame.Size = UDim2.new(0, 300, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BorderColor3 = Color3.fromRGB(200, 0, 0)
+MainFrame.BorderSizePixel = 2
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.ClipsDescendants = true
+
+-- العنوان
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "BOSTON HUB"
+Title.TextColor3 = Color3.fromRGB(0, 0, 0)
+Title.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+Title.TextSize = 18
+Title.Font = Enum.Font.SourceSansBold
+
+-- زرار الإغلاق (X)
+local CloseBtn = Instance.new("TextButton", Title)
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.Text = "X"
+CloseBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+CloseBtn.TextColor3 = Color3.fromRGB(200, 0, 0)
+CloseBtn.TextSize = 18
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+-- القائمة (الأسماء)
+local Scroll = Instance.new("ScrollingFrame", MainFrame)
+local UIListLayout = Instance.new("UIListLayout", Scroll)
+Scroll.Size = UDim2.new(1, -20, 1, -110)
+Scroll.Position = UDim2.new(0, 10, 0, 50)
+Scroll.BackgroundTransparency = 1
+Scroll.ScrollBarThickness = 4
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 5)
+
+-- زرار تفعيل المشاهدة
+local ActionBtn = Instance.new("TextButton", MainFrame)
+ActionBtn.Size = UDim2.new(0, 130, 0, 40)
+ActionBtn.Position = UDim2.new(0, 10, 1, -50)
+ActionBtn.Text = "تفعيل المشاهدة"
+ActionBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ActionBtn.TextColor3 = Color3.fromRGB(200, 0, 0)
+ActionBtn.BorderColor3 = Color3.fromRGB(200, 0, 0)
+
+-- زرار الرجوع لشخصيتي
+local ResetBtn = Instance.new("TextButton", MainFrame)
+ResetBtn.Size = UDim2.new(0, 130, 0, 40)
+ResetBtn.Position = UDim2.new(1, -140, 1, -50)
+ResetBtn.Text = "رجوع لشخصيتي"
+ResetBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ResetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ResetBtn.BorderColor3 = Color3.fromRGB(200, 0, 0)
+
+-- زرار التصغير (-)
+local MiniBtn = Instance.new("TextButton", Title)
+MiniBtn.Size = UDim2.new(0, 30, 0, 30)
+MiniBtn.Position = UDim2.new(1, -70, 0, 5)
+MiniBtn.Text = "-"
+MiniBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MiniBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MiniBtn.TextSize = 25
+
+local minimized = false
+MiniBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        -- إخفاء كل حاجة فوراً قبل التصغير
+        Scroll.Visible = false
+        ActionBtn.Visible = false
+        ResetBtn.Visible = false
+        MainFrame:TweenSize(UDim2.new(0, 300, 0, 40), "Out", "Quad", 0.3, true)
+        MiniBtn.Text = "+"
+    else
+        MainFrame:TweenSize(UDim2.new(0, 300, 0, 400), "Out", "Quad", 0.3, true, function()
+            -- إظهار الحاجات تاني بعد ما المستطيل يكبر
+            Scroll.Visible = true
+            ActionBtn.Visible = true
+            ResetBtn.Visible = true
+        end)
+        MiniBtn.Text = "-"
+    end
+end)
+
+-- وظيفة تحديث القائمة واختيار اللاعب
+local SelectedPlayer = nil
+local function UpdateList()
+    for _, child in pairs(Scroll:GetChildren()) do if child:IsA("TextButton") then child:Destroy() end end
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= game.Players.LocalPlayer then
+            local pBtn = Instance.new("TextButton", Scroll)
+            pBtn.Size = UDim2.new(1, -10, 0, 30)
+            pBtn.Text = p.Name
+            pBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+            pBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            pBtn.MouseButton1Click:Connect(function()
+                SelectedPlayer = p
+                for _, b in pairs(Scroll:GetChildren()) do if b:IsA("TextButton") then b.BorderColor3 = Color3.fromRGB(50,50,50) end end
+                pBtn.BorderColor3 = Color3.fromRGB(200, 0, 0)
+            end)
+        end
+    end
+end
+
+ActionBtn.MouseButton1Click:Connect(function()
+    if SelectedPlayer and SelectedPlayer.Character then
+        workspace.CurrentCamera.CameraSubject = SelectedPlayer.Character:FindFirstChild("Humanoid")
+    end
+end)
+
+ResetBtn.MouseButton1Click:Connect(function()
+    workspace.CurrentCamera.CameraSubject = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+end)
+
+game.Players.PlayerAdded:Connect(UpdateList)
+game.Players.PlayerRemoving:Connect(UpdateList)
+UpdateList()
